@@ -31,7 +31,7 @@ async def health_check():
     return {"status": "healthy"}
 
 # Include auth routes
-app.include_router(auth_router, prefix="/auth", tags=["authentication"])
+app.include_router(auth_router, prefix="/api/auth", tags=["authentication"])
 
 if __name__ == "__main__":
     import uvicorn
