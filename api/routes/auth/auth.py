@@ -1,28 +1,39 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Response
+from fastapi.responses import RedirectResponse
 from typing import Dict, Any
+import os
+import httpx
+import secrets
+import json
+from datetime import datetime, timedelta
+from .session import get_session, is_session_expired, update_session_access
 
 router = APIRouter()
 
 # Placeholder functions - you'll implement these later
-def get_session(session_id: str) -> Dict[str, Any] | None:
-    """Get session data from your session store (Redis/DB)"""
-    # TODO: Implement session lookup
-    return None
 
-def is_session_expired(session: Dict[str, Any]) -> bool:
-    """Check if session is expired"""
-    # TODO: Implement session expiration check
-    return True
 
 def get_user_by_id(user_id: int) -> Dict[str, Any] | None:
     """Get user from database"""
     # TODO: Implement user lookup
     return None
 
-def update_session_access(session_id: str) -> None:
-    """Update last accessed time for session"""
-    # TODO: Implement session update
+
+def store_user_pending_approval(user_data: Dict[str, Any]) -> None:
+    """Store user data pending admin approval"""
+    # TODO: Implement user storage in database with 'pending' status
     pass
+
+def get_user_by_discord_id(discord_id: str) -> Dict[str, Any] | None:
+    """Get user by Discord ID"""
+    # TODO: Implement user lookup by Discord ID
+    return None
+
+def is_user_approved(user: Dict[str, Any]) -> bool:
+    """Check if user is approved by admin"""
+    # TODO: Check user status in database
+    return user.get("status") == "approved"
+
 
 @router.get("/me")
 async def get_current_user(request: Request):
@@ -68,3 +79,15 @@ async def get_current_user(request: Request):
         }
     }
 
+
+@router.post("/logout")
+async def logout(response: Response):
+    """
+    Logout user by clearing session
+    """
+    # Clear the session cookie
+    response.delete_cookie("session_id")
+    
+    # TODO: Invalidate session in storage (Redis/DB)
+    
+    return {"message": "Logged out successfully"}

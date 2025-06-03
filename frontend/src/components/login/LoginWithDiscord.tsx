@@ -4,8 +4,8 @@ const LoginWithDiscord: React.FC = () => {
     const handleLogin = () => {
         const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
         const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;
-        const scope = 'identify email';
-        const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+        const scope = import.meta.env.VITE_DISCORD_SCOPE;
+        const discordAuthUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
 
         window.location.href = discordAuthUrl;
         console.log('Redirecting to Discord for login...');
