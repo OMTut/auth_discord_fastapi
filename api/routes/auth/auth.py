@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Request, HTTPException, Response
+from fastapi import APIRouter, Request, HTTPException, Response, Depends
 from fastapi.responses import RedirectResponse
 from typing import Dict, Any
+from sqlalchemy.orm import Session
 import os
 import httpx
 import secrets
 import json
 from datetime import datetime, timedelta
 from .session import get_session, is_session_expired, update_session_access
+from database.connection import get_db
 
 router = APIRouter()
 

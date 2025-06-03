@@ -3,9 +3,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from routes.auth import router as auth_router
+from database.connection import test_db_connection
+from sqlalchemy import text
 
 # Load environment variables
 load_dotenv()
+
+# Test database connection
+test_db_connection()
 
 app = FastAPI(
     title=os.getenv("APP_NAME", "Auth API"),

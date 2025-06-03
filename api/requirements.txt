@@ -4,3 +4,10 @@ python-dotenv==1.0.0
 httpx==0.25.2
 python-multipart==0.0.6
 
+# Database dependencies
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# Session storage (Redis)
+redis==5.0.1
