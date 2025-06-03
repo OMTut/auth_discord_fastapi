@@ -9,32 +9,11 @@ import json
 from datetime import datetime, timedelta
 from .session import get_session, is_session_expired, update_session_access
 from database.connection import get_db
+from database.operations.user_operations import (
+    get_user_by_id
+)
 
 router = APIRouter()
-
-# Placeholder functions - you'll implement these later
-
-
-def get_user_by_id(user_id: int) -> Dict[str, Any] | None:
-    """Get user from database"""
-    # TODO: Implement user lookup
-    return None
-
-
-def store_user_pending_approval(user_data: Dict[str, Any]) -> None:
-    """Store user data pending admin approval"""
-    # TODO: Implement user storage in database with 'pending' status
-    pass
-
-def get_user_by_discord_id(discord_id: str) -> Dict[str, Any] | None:
-    """Get user by Discord ID"""
-    # TODO: Implement user lookup by Discord ID
-    return None
-
-def is_user_approved(user: Dict[str, Any]) -> bool:
-    """Check if user is approved by admin"""
-    # TODO: Check user status in database
-    return user.get("status") == "approved"
 
 
 @router.get("/me")

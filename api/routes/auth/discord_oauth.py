@@ -5,12 +5,12 @@ import os
 import httpx
 from datetime import datetime
 
-# Import session and user functions from auth module
-from .auth import (
+# User database operations
+from database.operations.user_operations import (
     get_user_by_discord_id,
-    is_user_approved,
     store_user_pending_approval
 )
+
 
 from .session import get_session, is_session_expired, update_session_access
 
@@ -104,6 +104,8 @@ async def discord_callback(code: str = None, error: str = None):
         # user_guilds = await get_discord_user_guilds(access_token)
         # for guild in user_guilds:
         #     print(f"Guild: {guild['name']} (ID: {guild['id']})")
+
+        store_user_pending_approval(discord_user)
     
     except HTTPException as e:
         return RedirectResponse(
