@@ -1,4 +1,5 @@
 import React from 'react';
+import TypewriterText from '../ui/TypewriterText';
 
 interface LoginWithDiscordProps {
   message?: {
@@ -30,7 +31,16 @@ const LoginWithDiscord: React.FC<LoginWithDiscordProps> = ({ message, onClearMes
             </p>
         </div>
         <div className="message-response">
-            <h2>{message && <p>{message.message}</p>}</h2>
+            {message && (
+                <h2>
+                    <TypewriterText 
+                        text={message.message}
+                        speed={35}
+                        cursorBlinkRate={500}
+                        cursorChar="_"
+                    />
+                </h2>
+            )}
         </div>
         <div className="discord-login">
             <button onClick={handleLogin}>
