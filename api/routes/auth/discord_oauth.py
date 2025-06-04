@@ -8,8 +8,10 @@ from datetime import datetime
 # User database operations
 from database.operations.user_operations import (
     get_user_by_discord_id,
-    store_user_pending_approval
+    store_user_pending_approval,
+    is_user_approved
 )
+from database.models.user import UserStatus
 
 
 from .session import get_session, is_session_expired, update_session_access
@@ -84,11 +86,11 @@ async def discord_callback(code: str = None, error: str = None):
     # Check for errors from Discord
     if error:
         return RedirectResponse(
-            url=f"/?error=discord_auth_failed&message={error}"
+            url=f"{frontend_url}/?error=discord_auth_failed&message=Access Denied. Error connecting to Discord"
         )
     if not code:
         return RedirectResponse(
-            url=f"/?error=discord_auth_failed&message=no_code_provided"
+            url=f"{frontend_url}/?error=discord_auth_failed&message=ERROR: No code provided"
         )
     try:
         # Exchange code for access token
@@ -101,11 +103,36 @@ async def discord_callback(code: str = None, error: str = None):
         discord_user = await get_discord_user_info(access_token)
         print(discord_user)
 
+        # Check if user already exists
+        existing_user = get_user_by_discord_id(discord_user["id"])
+        print(existing_user)
+        if existing_user:
+            if not is_user_approved(existing_user):
+                return RedirectResponse(
+                    url=f"{frontend_url}/?error=pending_approval&message=Your account is pending admin approval"
+                )
+            # If user is approved, create session and redirect (TODO: implement session creation)
+            # For now, just redirect with success message
+            return RedirectResponse(
+                url=f"{frontend_url}/?auth=success&message=Login successful"
+            )
+        else:
+            new_user = store_user_pending_approval(discord_user)
+            if new_user:
+                # Redirect with pending message
+                return RedirectResponse(
+                    url=f"{frontend_url}/?auth=pending&message=Your account has been submitted for admin approval"
+                )
+            else:
+                # User already exists or error occurred
+                return RedirectResponse(
+                    url=f"{frontend_url}/?error=user_exists&message=Account already exists"
+                )
+
         # user_guilds = await get_discord_user_guilds(access_token)
         # for guild in user_guilds:
         #     print(f"Guild: {guild['name']} (ID: {guild['id']})")
 
-        store_user_pending_approval(discord_user)
     
     except HTTPException as e:
         return RedirectResponse(

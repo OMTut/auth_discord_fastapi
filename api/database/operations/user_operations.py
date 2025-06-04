@@ -48,7 +48,7 @@ def get_user_by_id(user_id: int) -> Optional[User]:
     finally:
         db.close()
 
-def get_user_by_discord_id(discord_id: str) -> Dict[str, Any] | None:
+def get_user_by_discord_id(discord_id: str) -> Optional[User]:
     """
     Get a user by their Discord ID
     Params: discord_id (str): The Discord ID of the user to retrieve
@@ -61,7 +61,16 @@ def get_user_by_discord_id(discord_id: str) -> Dict[str, Any] | None:
     finally:
         db.close()
 
-def is_user_approved(user: Dict[str, Any]) -> bool:
-    """Check if user is approved by admin"""
-    # TODO: Check user status in database
-    return user.get("status") == "approved"
+def is_user_approved(user: User) -> bool:
+    """
+    Check if user is approved by admin
+    Params: user (User): The user object to check
+    Returns: bool: True if user is approved, False otherwise
+    """
+    try:
+        if user and user.status == UserStatus.APPROVED:
+            return True
+        return False
+    except Exception as e:
+        print(f"Error checking user approval status: {e}")
+        return False

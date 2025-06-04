@@ -12,6 +12,7 @@ from database.connection import get_db
 from database.operations.user_operations import (
     get_user_by_id
 )
+from database.models.user import UserStatus
 
 router = APIRouter()
 
@@ -53,10 +54,10 @@ async def get_current_user(request: Request):
     return {
         "authenticated": True,
         "user": {
-            "id": user["id"],
-            "discord_username": user["discord_username"],
-            "discord_avatar": user["discord_avatar"],
-            "status": user["status"]
+            "id": user.id,
+            "discord_username": user.discord_username,
+            "discord_avatar": user.discord_avatar,
+            "status": user.status.value  # UserStatus is an enum, so we need .value
         }
     }
 
