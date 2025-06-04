@@ -29,26 +29,18 @@ const LoginComponent = () => {
 
   if (loading) {
     return (
-      <>
-        <div>
-          <p>Logo Area</p>
-        </div>
-        <div>
-          <p>Loading...</p>
-        </div>
-      </>
+        <>
+            <div><p>Logo Area</p></div>
+            <div><p>Loading...</p></div>
+        </>
     )
   }
 
-  if (error) {
-    console.error('Auth error:', error)
-  }
+  if (error) { console.error('Auth error:', error) }
 
   return (
     <>
-      <div>
-        <p>Logo Area</p>
-      </div>
+      <div><p>Logo Area</p></div>
 
       {isAuthenticated ? (
         <div>

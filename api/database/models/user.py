@@ -33,7 +33,11 @@ class User(Base):
         server_default=func.current_timestamp(),
         onupdate=func.current_timestamp()  # TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
-    last_login_at = Column(DateTime(timezone=True))  # TIMESTAMP WITH TIME ZONE
+    last_login_at = Column(
+        DateTime(timezone=True), 
+        server_default=func.current_timestamp(),
+        onupdate=func.current_timestamp()  # TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
     
     def __repr__(self):
         return f"<User(discord_id='{self.discord_id}', username='{self.discord_username}', status='{self.status.value}')>"

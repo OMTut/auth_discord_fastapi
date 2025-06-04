@@ -7,6 +7,7 @@ interface TypewriterTextProps {
   cursorBlinkRate?: number;
   cursorChar?: string;
   className?: string;
+  preserveLineBreaks?: boolean;
   children?: (props: { displayedText: string; cursor: ReactNode }) => ReactNode;
 }
 
@@ -16,6 +17,7 @@ const TypewriterText = ({
   cursorBlinkRate = 500,
   cursorChar = '_',
   className,
+  preserveLineBreaks = false,
   children
 }: TypewriterTextProps) => {
   const { displayedText, isTyping, showCursor } = useTypewriter({
@@ -39,6 +41,20 @@ const TypewriterText = ({
   }
 
   // Default render
+  if (preserveLineBreaks) {
+    return (
+      <span className={className}>
+        {displayedText.split('\n').map((line, index, array) => (
+          <span key={index}>
+            {line}
+            {index < array.length - 1 && <br />}
+          </span>
+        ))}
+        {cursor}
+      </span>
+    );
+  }
+
   return (
     <span className={className}>
       {displayedText}

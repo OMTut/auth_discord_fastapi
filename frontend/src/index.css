@@ -1,12 +1,12 @@
 :root {
-  font-family: '3270';
+  font-family: '3270', 'Courier New', 'Monaco', 'Menlo', monospace;
   src: url('./assets/3270-Regular.ttf') format('truetype');
-  line-height: 1.5;
+  line-height: 1.4;
   font-weight: 400;
 
-  color-scheme: light dark;
+  color-scheme: dark;
   color: #00bd1c;
-  background-color: #111111;
+  background-color: #000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,10 +25,9 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  /* Remove flex from body to let App.css handle layout */
 }
 
 h1 {

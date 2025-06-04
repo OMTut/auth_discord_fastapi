@@ -58,21 +58,28 @@ async def get_discord_user_info(access_token: str) -> Dict[str, Any]:
         
         return response.json()
     
-# async def get_discord_user_guilds(access_token: str) -> Dict[str, Any]:
-#     """Get Discord user's guilds (servers) using access token"""
-#     guilds_url = "https://discord.com/api/users/@me/guilds"
+async def get_discord_user_guilds(access_token: str) -> Dict[str, Any]:
+    """Get Discord user's guilds (servers) using access token"""
+    guilds_url = "https://discord.com/api/users/@me/guilds"
     
-#     headers = {
-#         "Authorization": f"Bearer {access_token}"
-#     }
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
     
-#     async with httpx.AsyncClient() as client:
-#         response = await client.get(guilds_url, headers=headers)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(guilds_url, headers=headers)
         
-#         if response.status_code != 200:
-#             raise HTTPException(status_code=400, detail="Failed to get user guilds from Discord")
+        if response.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to get user guilds from Discord")
         
-#         return response.json()
+        return response.json()
+    
+def is_member_of_target_guild(user_guilds: Dict[str, Any], target_guild_name: str) -> bool:
+    """Check if user is a member of the target guild"""
+    for guild in user_guilds:
+        if guild['name'] == target_guild_name:
+            return True
+    return False
 
 
 # Testing version
@@ -102,6 +109,9 @@ async def discord_callback(code: str = None, error: str = None):
         # Get user info from Discord
         discord_user = await get_discord_user_info(access_token)
         print(discord_user)
+        user_servers = await get_discord_user_guilds(access_token)
+        for server in user_servers:
+            print(f"Server: {server['name']} (ID: {server['id']})")
 
         # Check if user already exists
         existing_user = get_user_by_discord_id(discord_user["id"])
@@ -117,6 +127,14 @@ async def discord_callback(code: str = None, error: str = None):
                 url=f"{frontend_url}/?auth=success&message=Login successful"
             )
         else:
+            # Check if user is a member of Naja Echó
+            target_guild = os.getenv("TARGET_SERVER_NAME")
+            is_member = is_member_of_target_guild(user_servers, target_guild)
+            if not is_member:
+                return RedirectResponse(
+                    url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
+                )
+
             new_user = store_user_pending_approval(discord_user)
             if new_user:
                 # Redirect with pending message

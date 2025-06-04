@@ -1,5 +1,6 @@
 import React from 'react';
 import TypewriterText from '../ui/TypewriterText';
+import SequentialTypewriter from '../ui/SequentialTypewriter';
 
 interface LoginWithDiscordProps {
   message?: {
@@ -22,20 +23,24 @@ const LoginWithDiscord: React.FC<LoginWithDiscordProps> = ({ message, onClearMes
 
     return (
         <>
-        <div className="login-requirement">
-            <h2>Terminal Requirments:</h2>
-            <p>
-                Must have a Discord account.<br />
-                Must be registered with the server.<br />
-                Terminal priveledges are dependent upon approval.
-            </p>
-        </div>
+        {!message && (
+            <div className="login-requirement">
+                <TypewriterText 
+                    text={`Terminal Requirments:
+                    - Must have a Discord account.
+                    - Must be registered with the server.
+                    - Terminal privileges are dependent upon approval.`}
+                    preserveLineBreaks={true}
+                    speed={20}
+                    />
+            </div>
+        )}
         <div className="message-response">
             {message && (
                 <h2>
                     <TypewriterText 
                         text={message.message}
-                        speed={35}
+                        speed={12}
                         cursorBlinkRate={500}
                         cursorChar="_"
                     />

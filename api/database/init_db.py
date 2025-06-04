@@ -1,5 +1,9 @@
-from .connection import engine, Base
-from .models import User, Session  # Import models to register them with Base
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database.connection import engine, Base
+from database.models.user import User  # Import models to register them with Base
 
 def create_tables():
     """Create all database tables"""
