@@ -55,7 +55,7 @@ const LoginComponent = () => {
       ) : (
         <LoginWithDiscord 
           message={urlMessage}
-          onClearMessage={() => setUrlMessage(null)}
+
         />
       )}
     </>

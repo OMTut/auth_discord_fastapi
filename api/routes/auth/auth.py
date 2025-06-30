@@ -7,11 +7,12 @@ import httpx
 import secrets
 import json
 from datetime import datetime, timedelta
-from .session import get_session, is_session_expired, update_session_access
+from .session import get_session, is_session_valid, update_session_access
 from database.connection import get_db
 from database.operations.user_operations import (
     get_user_by_id
 )
+from database.operations.session_operations import get_user_from_session
 from database.models.user import UserStatus
 
 router = APIRouter()
@@ -33,14 +34,14 @@ async def get_current_user(request: Request):
     
     # If yes, is it valid?
     session = get_session(session_id)
-    if not session or is_session_expired(session):
+    if not session or not is_session_valid(session):
         return {
             "authenticated": False,
             "message": "Session expired or invalid."
         }
     
     # Is there a user associated with the session? Get from db
-    user = get_user_by_id(session.get("user_id"))
+    user = get_user_from_session(session_id)
     if not user:
         return {
             "authenticated": False,
@@ -56,20 +57,24 @@ async def get_current_user(request: Request):
         "user": {
             "id": user.id,
             "discord_username": user.discord_username,
-            "discord_avatar": user.discord_avatar,
             "status": user.status.value  # UserStatus is an enum, so we need .value
         }
     }
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(request: Request, response: Response):
     """
     Logout user by clearing session
     """
+    session_id = request.cookies.get("session_id")
+    
+    # Invalidate session in storage
+    if session_id:
+        from .session import invalidate_session
+        invalidate_session(session_id)
+    
     # Clear the session cookie
     response.delete_cookie("session_id")
-    
-    # TODO: Invalidate session in storage (Redis/DB)
     
     return {"message": "Logged out successfully"}

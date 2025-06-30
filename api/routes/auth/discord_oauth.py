@@ -73,13 +73,73 @@ async def get_discord_user_guilds(access_token: str) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail="Failed to get user guilds from Discord")
         
         return response.json()
+
+async def get_discord_guild_member(access_token: str, guild_id: str) -> Dict[str, Any]:
+    """Get Discord user's member details for a specific guild (includes roles)"""
+    member_url = f"https://discord.com/api/users/@me/guilds/{guild_id}/member"
     
-def is_member_of_target_guild(user_guilds: Dict[str, Any], target_guild_name: str) -> bool:
-    """Check if user is a member of the target guild"""
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(member_url, headers=headers)
+        
+        if response.status_code != 200:
+            # User might not be in guild or insufficient permissions
+            return None
+        
+        return response.json()
+    
+def is_member_of_target_guild(user_guilds: Dict[str, Any], target_guild_id:str) -> tuple[bool, str]:
+    """Check if user is a member of the target guild
+    Returns: (is_member: bool, guild_id: str)
+    """
     for guild in user_guilds:
-        if guild['name'] == target_guild_name:
-            return True
-    return False
+        if guild['id'] == target_guild_id:
+            return True, guild['id']
+    return False, None
+
+async def check_user_guild_roles(access_token: str, guild_id: str, required_roles: list = None) -> Dict[str, Any]:
+    """Check user's roles in a specific guild
+    
+    Args:
+        access_token: Discord OAuth access token
+        guild_id: Discord guild ID
+        required_roles: List of role names/IDs that are acceptable (optional)
+    
+    Returns:
+        Dict with member info including roles
+    """
+    member_data = await get_discord_guild_member(access_token, guild_id)
+    
+    if not member_data:
+        return {
+            "is_member": False,
+            "roles": [],
+            "has_required_role": False
+        }
+    
+    user_roles = member_data.get('roles', [])
+    
+    # If no required roles specified, just return membership info
+    if not required_roles:
+        return {
+            "is_member": True,
+            "roles": user_roles,
+            "has_required_role": True,  # No specific role required
+            "member_data": member_data
+        }
+    
+    # Check if user has any of the required roles
+    has_required_role = any(role in user_roles for role in required_roles)
+    
+    return {
+        "is_member": True,
+        "roles": user_roles,
+        "has_required_role": has_required_role,
+        "member_data": member_data
+    }
 
 
 # Testing version
@@ -121,19 +181,47 @@ async def discord_callback(code: str = None, error: str = None):
                 return RedirectResponse(
                     url=f"{frontend_url}/?error=pending_approval&message=Your account is pending admin approval"
                 )
-            # If user is approved, create session and redirect (TODO: implement session creation)
-            # For now, just redirect with success message
-            return RedirectResponse(
+            # If user is approved, create session and redirect
+            from .session import create_session
+            session_id = create_session(existing_user.id)
+
+            redirect_response = RedirectResponse(
                 url=f"{frontend_url}/?auth=success&message=Login successful"
             )
+            redirect_response.set_cookie(
+                key="session_id",
+                value=session_id,
+                httponly=True,
+                secure=os.getenv("ENVIRONMENT") == "production",
+                samesite="lax",
+                max_age=86400 * 7  # 7 days
+            )
+            return redirect_response
         else:
-            # Check if user is a member of Naja Echó
-            target_guild = os.getenv("TARGET_SERVER_NAME")
-            is_member = is_member_of_target_guild(user_servers, target_guild)
+            # Check if user is a member of Naja Echó guild
+            target_guild = os.getenv("TARGET_SERVER_ID")
+            is_member, guild_id = is_member_of_target_guild(user_servers, target_guild)
+            
             if not is_member:
                 return RedirectResponse(
                     url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
                 )
+            
+            # Check user's roles in the guild (optional - specify required roles)
+            # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
+            guild_id = guild_id or os.getenv("TARGET_SERVER_ID")
+            guild_member_info = await check_user_guild_roles(access_token, guild_id)
+            
+            print(f"User roles in {target_guild}: {guild_member_info.get('roles', [])}")
+            
+            # Optionally check for specific roles here
+            # if not guild_member_info.get('has_required_role'):
+            #     return RedirectResponse(
+            #         url=f"{frontend_url}/?error=insufficient_role&message=You need a specific role in the guild to register"
+            #     )
+
+            # Debug: Print the Discord user data
+            print(f"Creating new user with Discord data: {discord_user}")
 
             new_user = store_user_pending_approval(discord_user)
             if new_user:

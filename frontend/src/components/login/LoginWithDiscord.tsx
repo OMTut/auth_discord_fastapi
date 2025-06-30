@@ -1,16 +1,15 @@
 import React from 'react';
 import TypewriterText from '../ui/TypewriterText';
-import SequentialTypewriter from '../ui/SequentialTypewriter';
+//import SequentialTypewriter from '../ui/SequentialTypewriter';
 
 interface LoginWithDiscordProps {
   message?: {
     type: 'success' | 'error' | 'info';
     message: string;
   } | null;
-  onClearMessage?: () => void;
 }
 
-const LoginWithDiscord: React.FC<LoginWithDiscordProps> = ({ message, onClearMessage }) => {
+const LoginWithDiscord: React.FC<LoginWithDiscordProps> = ({ message }) => {
     const handleLogin = () => {
         const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
         const redirectUri = import.meta.env.VITE_DISCORD_REDIRECT_URI;

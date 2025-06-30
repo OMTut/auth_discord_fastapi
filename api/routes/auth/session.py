@@ -1,26 +1,44 @@
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any
-import secrets
+from typing import Dict, Any, Optional
+from datetime import datetime, timedelta
 
-def create_session(user_id: int) -> str:
-    """Create a new session for the user"""
-    session_id = secrets.token_urlsafe(32)
-    # TODO: Implement session storage (Redis/DB)
-    # For now, we'll store in memory (not production ready)
-    # In production, store this in Redis or database with expiration
-    return session_id
+# Import database session operations
+from database.operations.session_operations import (
+    create_session as db_create_session,
+    get_session as db_get_session,
+    get_user_from_session,
+    update_session_access as db_update_session_access,
+    invalidate_session as db_invalidate_session
+)
+from database.models.session import Session
+from database.models.user import User
 
-def get_session(session_id: str) -> Dict[str, Any] | None:
-    """Get session data from your session store (Redis/DB)"""
-    # TODO: Implement session lookup
-    return None
+def create_session(user_id: int) -> Optional[str]:
+    """Create a new session for the user in the database"""
+    return db_create_session(user_id)
 
-def is_session_expired(session: Dict[str, Any]) -> bool:
+def get_session(session_id: str) -> Optional[Session]:
+    """Get session data from the database"""
+    return db_get_session(session_id)
+
+def is_session_expired(session: Session) -> bool:
     """Check if session is expired"""
-    # TODO: Implement session expiration check
-    return True
+    if not session:
+        return True
+    
+    return session.is_expired()
 
-def update_session_access(session_id: str) -> None:
+def is_session_valid(session: Session) -> bool:
+    """Check if session is valid (active and not expired)"""
+    if not session:
+        return False
+    
+    return session.is_valid()
+
+def update_session_access(session_id: str) -> bool:
     """Update last accessed time for session"""
-    # TODO: Implement session update
-    pass
+    return db_update_session_access(session_id)
+
+def invalidate_session(session_id: str) -> bool:
+    """Invalidate session in database"""
+    return db_invalidate_session(session_id)
