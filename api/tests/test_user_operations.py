@@ -2,7 +2,7 @@
 Tests for user operations
 """
 import pytest
-from database.operations.user_operations import (
+from database.operations.users import (
     store_user_pending_approval,
     get_user_by_id,
     get_user_by_discord_id,

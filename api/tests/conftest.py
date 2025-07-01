@@ -61,32 +61,29 @@ def setup_test_database():
 
 @pytest.fixture
 def db_session(setup_test_database):
-    """Create a database session for a test and patch SessionLocal to use test database."""
+    """Create a database session for a test and patch SessionLocal globally."""
     session = TestSessionLocal()
     
-    # Patch SessionLocal to return test database sessions
+    # Patch SessionLocal at the source - this will affect ALL imports
     with patch('database.connection.SessionLocal') as mock_session_local:
+        # Return a fresh session each time SessionLocal() is called
         mock_session_local.return_value = session
         
-        # Also patch it in user_operations module
-        with patch('database.operations.user_operations.SessionLocal') as mock_user_ops_session:
-            mock_user_ops_session.return_value = session
+        try:
+            yield session
+        finally:
+            # Clean up all data after each test
+            session.rollback()
             
-            try:
-                yield session
-            finally:
-                # Clean up all data after each test
-                session.rollback()
-                
-                # Delete all data from tables
-                from database.models.session import Session as SessionModel
-                from database.models.user import User
-                
-                session.query(SessionModel).delete()
-                session.query(User).delete()
-                session.commit()
-                
-                session.close()
+            # Delete all data from tables
+            from database.models.session import Session as SessionModel
+            from database.models.user import User
+            
+            session.query(SessionModel).delete()
+            session.query(User).delete()
+            session.commit()
+            
+            session.close()
 
 @pytest.fixture
 def sample_user_data():
