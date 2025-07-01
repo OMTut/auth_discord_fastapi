@@ -57,6 +57,7 @@ async def get_current_user(request: Request):
         "user": {
             "id": user.id,
             "discord_username": user.discord_username,
+            "server_nickname": user.server_nickname,  # Include server nickname
             "status": user.status.value  # UserStatus is an enum, so we need .value
         }
     }

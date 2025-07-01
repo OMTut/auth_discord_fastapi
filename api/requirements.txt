@@ -11,3 +11,8 @@ alembic==1.12.1
 
 # Session storage (Redis)
 redis==5.0.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+faker==20.1.0

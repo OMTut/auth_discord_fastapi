@@ -15,6 +15,7 @@ def store_user_pending_approval(user_data: Dict[str, Any]) -> Optional[User]:
         user = User(
             discord_id=user_data.get("id"),
             discord_username=user_data.get("username"),
+            server_nickname=user_data.get("server_nickname"),  # Include server nickname
             email=user_data.get("email"),
             status=UserStatus.PENDING
         )
@@ -58,6 +59,24 @@ def get_user_by_discord_id(discord_id: str) -> Optional[User]:
     try:
         user = db.query(User).filter(User.discord_id == discord_id).first()
         return user
+    finally:
+        db.close()
+
+def get_server_nickname_by_user_id(user_id: int) -> Optional[str]:
+    """
+    Get the server nickname of a user by their ID
+    Params: user_id (int): The ID of the user
+    Returns: Optional[str]: The server nickname if found, otherwise None
+    """
+    db: Session = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            return user.server_nickname
+        return None
+    except Exception as e:
+        print(f"Error retrieving server nickname for user ID {user_id}: {e}")
+        return None
     finally:
         db.close()
 

@@ -101,46 +101,49 @@ def is_member_of_target_guild(user_guilds: Dict[str, Any], target_guild_id:str) 
     return False, None
 
 async def check_user_guild_roles(access_token: str, guild_id: str, required_roles: list = None) -> Dict[str, Any]:
-    """Check user's roles in a specific guild
+    """Check user's roles in a specific guild and extract server nickname
     
     Args:
         access_token: Discord OAuth access token
         guild_id: Discord guild ID
         required_roles: List of role names/IDs that are acceptable (optional)
-    
+
     Returns:
-        Dict with member info including roles
+        Dict with member info including roles and nickname
     """
     member_data = await get_discord_guild_member(access_token, guild_id)
-    
+
     if not member_data:
         return {
             "is_member": False,
             "roles": [],
-            "has_required_role": False
+            "has_required_role": False,
+            "nickname": None
         }
-    
+
     user_roles = member_data.get('roles', [])
-    
+    server_nickname = member_data.get('nick')  # Extract server nickname
+
     # If no required roles specified, just return membership info
     if not required_roles:
         return {
             "is_member": True,
             "roles": user_roles,
             "has_required_role": True,  # No specific role required
+            "nickname": server_nickname,  # Include nickname
             "member_data": member_data
         }
-    
+
     # Check if user has any of the required roles
     has_required_role = any(role in user_roles for role in required_roles)
-    
+
     return {
         "is_member": True,
         "roles": user_roles,
         "has_required_role": has_required_role,
+        "nickname": server_nickname,  # Include nickname
         "member_data": member_data
     }
-
 
 # Testing version
 @router.get("/discord/callback")
@@ -222,8 +225,13 @@ async def discord_callback(code: str = None, error: str = None):
 
             # Debug: Print the Discord user data
             print(f"Creating new user with Discord data: {discord_user}")
+            print(f"Server nickname: {guild_member_info.get('nickname')}")
+            
+            # Prepare user data with server nickname
+            user_data_with_nickname = discord_user.copy()
+            user_data_with_nickname['server_nickname'] = guild_member_info.get('nickname')
 
-            new_user = store_user_pending_approval(discord_user)
+            new_user = store_user_pending_approval(user_data_with_nickname)
             if new_user:
                 # Redirect with pending message
                 return RedirectResponse(
