@@ -9,7 +9,7 @@ import json
 from datetime import datetime, timedelta
 from .session import get_session, is_session_valid, update_session_access
 from database.connection import get_db
-from database.operations.user_operations import (
+from database.operations.users.get_user_by_id import (
     get_user_by_id
 )
 from database.operations.session_operations import get_user_from_session

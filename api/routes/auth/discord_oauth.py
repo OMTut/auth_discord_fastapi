@@ -6,7 +6,7 @@ import httpx
 from datetime import datetime
 
 # User database operations
-from database.operations.user_operations import (
+from database.operations.users import (
     get_user_by_discord_id,
     store_user_pending_approval,
     is_user_approved
