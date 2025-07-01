@@ -80,24 +80,30 @@ def test_get_server_nickname_by_user_id_no_nickname(db_session, sample_user_data
     assert server_nickname is None
 
 
-def test_is_user_approved():
-    """Test checking if a user is approved"""
-    # Create a mock approved user
-    mock_user = User(status=UserStatus.APPROVED)
-    assert is_user_approved(mock_user) is True
-
-    # Create a mock pending user
-    mock_user.status = UserStatus.PENDING
-    assert is_user_approved(mock_user) is False
-
+def test_is_user_approved_with_real_users(db_session, sample_user_data):
+    """Test checking if a user is approved using real database users"""
+    # Create a pending user (default status)
+    pending_user = store_user_pending_approval(sample_user_data)
+    assert is_user_approved(pending_user) is False
+    
+    # Manually set user to approved status and test
+    pending_user.status = UserStatus.APPROVED
+    db_session.commit()
+    assert is_user_approved(pending_user) is True
+    
     # Test rejected user
-    mock_user.status = UserStatus.REJECTED
-    assert is_user_approved(mock_user) is False
-
+    pending_user.status = UserStatus.REJECTED
+    db_session.commit()
+    assert is_user_approved(pending_user) is False
+    
     # Test banned user
-    mock_user.status = UserStatus.BANNED
-    assert is_user_approved(mock_user) is False
+    pending_user.status = UserStatus.BANNED
+    db_session.commit()
+    assert is_user_approved(pending_user) is False
 
+
+def test_is_user_approved_edge_cases():
+    """Test edge cases for is_user_approved function"""
     # Test with None user
     assert is_user_approved(None) is False
 
