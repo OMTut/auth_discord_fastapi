@@ -9,7 +9,8 @@ from datetime import datetime
 from database.operations.users import (
     get_user_by_discord_id,
     store_user_pending_approval,
-    is_user_approved
+    is_user_approved,
+    update_user_discord_info
 )
 from database.models.user import UserStatus
 
@@ -180,10 +181,18 @@ async def discord_callback(code: str = None, error: str = None):
         existing_user = get_user_by_discord_id(discord_user["id"])
         print(existing_user)
         if existing_user:
+            # Check if Discord data (username, email) has changed
+            if existing_user.discord_username != discord_user['username'] or \
+               existing_user.email != discord_user.get('email') or \
+               existing_user.server_nickname != guild_member_info.get('nickname'):
+                update_user_discord_info(existing_user.id, discord_user)
+            
+            # Check if user is approved
             if not is_user_approved(existing_user):
                 return RedirectResponse(
                     url=f"{frontend_url}/?error=pending_approval&message=Your account is pending admin approval"
                 )
+
             # If user is approved, create session and redirect
             from .session import create_session
             session_id = create_session(existing_user.id)
@@ -243,10 +252,6 @@ async def discord_callback(code: str = None, error: str = None):
                     url=f"{frontend_url}/?error=user_exists&message=Account already exists"
                 )
 
-        # user_guilds = await get_discord_user_guilds(access_token)
-        # for guild in user_guilds:
-        #     print(f"Guild: {guild['name']} (ID: {guild['id']})")
-
     
     except HTTPException as e:
         return RedirectResponse(
@@ -256,88 +261,4 @@ async def discord_callback(code: str = None, error: str = None):
         return RedirectResponse(
             url=f"{frontend_url}/?error=discord_auth_failed&message=An unexpected error occurred"
         )
-
-
-# Full version
-# @router.get("/discord/callback")
-# async def discord_callback(code: str = None, error: str = None):
-#     """
-#     Handle Discord OAuth callback
-#     """
-#     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    
-#     # Check for errors from Discord
-#     if error:
-#         return RedirectResponse(
-#             url=f"{frontend_url}/?error=discord_auth_failed&message={error}"
-#         )
-    
-#     if not code:
-#         return RedirectResponse(
-#             url=f"{frontend_url}/?error=discord_auth_failed&message=no_code_provided"
-#         )
-    
-#     try:
-#         # Exchange code for access token
-#         token_data = await exchange_code_for_token(code)
-#         access_token = token_data.get("access_token")
-        
-#         if not access_token:
-#             raise HTTPException(status_code=400, detail="No access token received")
-        
-#         # Get user info from Discord
-#         discord_user = await get_discord_user_info(access_token)
-        
-#         # Check if user already exists
-#         existing_user = get_user_by_discord_id(discord_user["id"])
-        
-#         if existing_user:
-#             # User exists, check if approved
-#             if is_user_approved(existing_user):
-#                 # Create session and redirect to success
-#                 session_id = create_session(existing_user["id"])
-                
-#                 # Set session cookie
-#                 redirect_response = RedirectResponse(url=f"{frontend_url}/?auth=success")
-#                 redirect_response.set_cookie(
-#                     key="session_id",
-#                     value=session_id,
-#                     httponly=True,
-#                     secure=os.getenv("ENVIRONMENT") == "production",
-#                     samesite="lax",
-#                     max_age=86400 * 7  # 7 days
-#                 )
-#                 return redirect_response
-#             else:
-#                 # User exists but not approved
-#                 return RedirectResponse(
-#                     url=f"{frontend_url}/?error=pending_approval&message=Your account is pending admin approval"
-#                 )
-#         else:
-#             # New user - store for approval
-#             user_data = {
-#                 "discord_id": discord_user["id"],
-#                 "discord_username": discord_user['username'],
-#                 "discord_avatar": f"https://cdn.discordapp.com/avatars/{discord_user['id']}/{discord_user['avatar']}.png" if discord_user.get('avatar') else None,
-#                 "email": discord_user.get("email"),
-#                 "status": "pending",
-#                 "created_at": datetime.utcnow().isoformat()
-#             }
-            
-#             store_user_pending_approval(user_data)
-            
-#             # TODO: Send notification to admin about new user
-            
-#             return RedirectResponse(
-#                 url=f"{frontend_url}/?auth=pending&message=Your account has been submitted for admin approval"
-#             )
-            
-#     except HTTPException as e:
-#         return RedirectResponse(
-#             url=f"{frontend_url}/?error=discord_auth_failed&message={e.detail}"
-#         )
-#     except Exception as e:
-#         return RedirectResponse(
-#             url=f"{frontend_url}/?error=discord_auth_failed&message=An unexpected error occurred"
-#         )
 
