@@ -177,14 +177,30 @@ async def discord_callback(code: str = None, error: str = None):
         for server in user_servers:
             print(f"Server: {server['name']} (ID: {server['id']})")
 
+        # Check if user is a member of guild
+        target_guild = os.getenv("TARGET_SERVER_ID")
+        is_member, guild_id = is_member_of_target_guild(user_servers, target_guild)
+            
+        if not is_member:
+            return RedirectResponse(
+                url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
+            )
+            
+            # Check user's roles in the guild (optional - specify required roles)
+            # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
+        guild_id = guild_id or os.getenv("TARGET_SERVER_ID")
+        guild_member_info = await check_user_guild_roles(access_token, guild_id)
+            
+        print(f"User roles in {target_guild}: {guild_member_info.get('roles', [])}")
+
         # Check if user already exists
         existing_user = get_user_by_discord_id(discord_user["id"])
         print(existing_user)
         if existing_user:
             # Check if Discord data (username, email) has changed
             if existing_user.discord_username != discord_user['username'] or \
-               existing_user.email != discord_user.get('email') or \
-               existing_user.server_nickname != guild_member_info.get('nickname'):
+                existing_user.email != discord_user.get('email') or \
+                existing_user.server_nickname != guild_member_info.get('nickname'):
                 update_user_discord_info(existing_user.id, discord_user)
             
             # Check if user is approved
@@ -194,6 +210,7 @@ async def discord_callback(code: str = None, error: str = None):
                 )
 
             # If user is approved, create session and redirect
+            print(f"User {existing_user.id} is approved, creating session")
             from .session import create_session
             session_id = create_session(existing_user.id)
 
@@ -210,21 +227,21 @@ async def discord_callback(code: str = None, error: str = None):
             )
             return redirect_response
         else:
-            # Check if user is a member of Naja Echó guild
-            target_guild = os.getenv("TARGET_SERVER_ID")
-            is_member, guild_id = is_member_of_target_guild(user_servers, target_guild)
+            # # Check if user is a member of Naja Echó guild
+            # target_guild = os.getenv("TARGET_SERVER_ID")
+            # is_member, guild_id = is_member_of_target_guild(user_servers, target_guild)
             
-            if not is_member:
-                return RedirectResponse(
-                    url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
-                )
+            # if not is_member:
+            #     return RedirectResponse(
+            #         url=f"{frontend_url}/?error=not_in_target_guild&message=Access Denied. Approved Membership in Discord Required."
+            #     )
             
-            # Check user's roles in the guild (optional - specify required roles)
-            # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
-            guild_id = guild_id or os.getenv("TARGET_SERVER_ID")
-            guild_member_info = await check_user_guild_roles(access_token, guild_id)
+            # # Check user's roles in the guild (optional - specify required roles)
+            # # required_roles = ["123456789", "987654321"]  # Role IDs for specific ranks
+            # guild_id = guild_id or os.getenv("TARGET_SERVER_ID")
+            # guild_member_info = await check_user_guild_roles(access_token, guild_id)
             
-            print(f"User roles in {target_guild}: {guild_member_info.get('roles', [])}")
+            # print(f"User roles in {target_guild}: {guild_member_info.get('roles', [])}")
             
             # Optionally check for specific roles here
             # if not guild_member_info.get('has_required_role'):
